@@ -18,6 +18,13 @@ const CHARACTER_BOTTOM_OFFSET = 90;
 const CHARACTER_LANDING_Y = 378;
 const MAX_HISTORY_LENGTH = 30;
 
+function createSkyGradient(topColor, bottomColor) {
+  return {
+    top: topColor,
+    bottom: bottomColor,
+  };
+}
+
 function proxyImageUrl(url) {
   return `${API_BASE_URL}/api/msio/image-proxy?url=${encodeURIComponent(url)}`;
 }
@@ -34,6 +41,7 @@ const SCENE_PRESETS = [
     positionX: 50,
     positionY: 50,
     fillColor: "#ffffff",
+    skyGradient: null,
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 170, y: CHARACTER_LANDING_Y },
@@ -55,6 +63,7 @@ const SCENE_PRESETS = [
     positionX: 40,
     positionY: 40,
     fillColor: "#bfeeff",
+    skyGradient: createSkyGradient("#dff4ff", "#f8fdff"),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 160, y: 360 },
@@ -77,6 +86,7 @@ const SCENE_PRESETS = [
     positionX: 49,
     positionY: 49,
     fillColor: "#d9f7ce",
+    skyGradient: createSkyGradient("#d8f4de", "#f2fff8"),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 158, y: 352 },
@@ -99,6 +109,7 @@ const SCENE_PRESETS = [
     positionX: 48,
     positionY: 48,
     fillColor: "#d8d1ca",
+    skyGradient: createSkyGradient("#ebe2db", "#faf7f4"),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 160, y: 356 },
@@ -121,6 +132,7 @@ const SCENE_PRESETS = [
     positionX: 44,
     positionY: 46,
     fillColor: "#bfefff",
+    skyGradient: createSkyGradient("#c9f2ff", "#f6fdff"),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 152, y: 355 },
@@ -143,6 +155,7 @@ const SCENE_PRESETS = [
     positionX: 47,
     positionY: 45,
     fillColor: "#7ec8ff",
+    skyGradient: createSkyGradient("#a9dfff", "#eef8ff"),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 155, y: 356 },
@@ -165,6 +178,7 @@ const SCENE_PRESETS = [
     positionX: 49,
     positionY: 46,
     fillColor: "#e4d8ca",
+    skyGradient: createSkyGradient("#eadfce", "#fbf7f1"),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 156, y: 360 },
@@ -187,6 +201,7 @@ const SCENE_PRESETS = [
     positionX: 50,
     positionY: 46,
     fillColor: "#dff4ff",
+    skyGradient: createSkyGradient("#e7f7ff", "#ffffff"),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 152, y: 356 },
@@ -209,6 +224,7 @@ const SCENE_PRESETS = [
     positionX: 49,
     positionY: 48,
     fillColor: "#d3f3ff",
+    skyGradient: createSkyGradient("#c8efff", "#f4fcff"),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 150, y: 357 },
@@ -231,6 +247,7 @@ const SCENE_PRESETS = [
     positionX: 50,
     positionY: 48,
     fillColor: "#f5e5c4",
+    skyGradient: createSkyGradient("#f5dfb3", "#fff7e9"),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 154, y: 358 },
@@ -399,7 +416,7 @@ async function createTransparentMapImage(src) {
     const g = data[index + 1];
     const b = data[index + 2];
 
-    if (r > 246 && g > 246 && b > 246) {
+    if (r > 252 && g > 252 && b > 252) {
       data[index + 3] = 0;
     }
   }
@@ -450,6 +467,11 @@ function getPresetCharacterPosition(preset, index) {
   }
 
   return getDefaultCharacterPosition(index, preset?.defaultCharacterY || CHARACTER_LANDING_Y);
+}
+
+function getPresetGradientCss(preset) {
+  if (!preset?.skyGradient) return "";
+  return `linear-gradient(180deg, ${preset.skyGradient.top} 0%, ${preset.skyGradient.bottom} 100%)`;
 }
 
 function createMemberFromCharacter(data, index, preset) {
@@ -574,6 +596,7 @@ export default function App() {
   const selectedObjectScale = primarySelectedObject?.scale || 1;
   const displayBackgroundUrl = processedBackgroundUrl || backgroundUrl;
   const hasBgm = Boolean(selectedMapPreset.bgmPath);
+  const stageSkyGradient = getPresetGradientCss(selectedMapPreset);
 
   const getSceneSnapshot = () => ({
     partyMembers,
@@ -1242,7 +1265,15 @@ export default function App() {
     }
 
     if (!transparent || displayBackgroundUrl) {
-      ctx.fillStyle = selectedMapPreset.fillColor || "#ffffff";
+      if (selectedMapPreset.skyGradient) {
+        const gradient = ctx.createLinearGradient(0, 0, 0, STAGE_HEIGHT);
+        gradient.addColorStop(0, selectedMapPreset.skyGradient.top);
+        gradient.addColorStop(1, selectedMapPreset.skyGradient.bottom);
+        ctx.fillStyle = gradient;
+      } else {
+        ctx.fillStyle = selectedMapPreset.fillColor || "#ffffff";
+      }
+
       ctx.fillRect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
     }
 
@@ -1515,11 +1546,15 @@ export default function App() {
             style={{
               backgroundColor: selectedMapPreset.fillColor,
               backgroundImage: displayBackgroundUrl
-                ? `url(${displayBackgroundUrl})`
+                ? `url(${displayBackgroundUrl})${stageSkyGradient ? `, ${stageSkyGradient}` : ""}`
+                : stageSkyGradient || undefined,
+              backgroundSize: displayBackgroundUrl
+                ? `${stageBackgroundSize}, cover`
                 : undefined,
-              backgroundSize: stageBackgroundSize,
-              backgroundPosition: `${backgroundPositionX}% ${backgroundPositionY}%`,
-              backgroundRepeat: displayBackgroundUrl ? "no-repeat" : undefined,
+              backgroundPosition: displayBackgroundUrl
+                ? `${backgroundPositionX}% ${backgroundPositionY}%, center`
+                : undefined,
+              backgroundRepeat: displayBackgroundUrl ? "no-repeat, no-repeat" : undefined,
             }}
             onPointerMove={moveMemberToPointer}
             onPointerUp={() => setDragInfo(null)}
