@@ -24,6 +24,22 @@ Then open the Vite URL, usually `http://localhost:5173`.
 
 ## Backend deploy
 
+### Render blueprint
+
+This repository includes [render.yaml](/C:/maple-avatar-studio/render.yaml) so Render can prefill the backend service settings.
+
+In Render:
+
+1. New + -> Blueprint
+2. Connect `uuu0897-cell/0712`
+3. Confirm the `maple-avatar-studio-api` service
+4. Add environment variables:
+   - `NEXON_API_KEY=your_real_key`
+   - `ALLOWED_ORIGINS=https://your-vercel-app.vercel.app`
+5. Deploy
+
+If you use a custom domain or a second Vercel URL, separate origins with commas.
+
 Deploy the `server` folder to a Node hosting service such as Render or Railway.
 
 Recommended settings:

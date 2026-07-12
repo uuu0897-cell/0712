@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: maple-avatar-studio-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NEXON_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
