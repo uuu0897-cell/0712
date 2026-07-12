@@ -387,38 +387,25 @@ button {
 .stageCharacterNameTag {
   position: absolute;
   left: 50%;
-  top: calc(100% - 10px);
+  top: calc(100% - 6px);
   transform: translateX(-50%);
-  min-width: 68px;
-  max-width: 136px;
-  padding: 4px 10px 5px;
-  border: 1px solid rgba(15, 23, 42, 0.8);
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.88);
+  min-width: 64px;
+  max-width: 124px;
+  padding: 3px 8px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(16, 16, 24, 0.82);
   color: #ffffff;
   font-size: 11px;
   font-weight: 900;
-  line-height: 1.1;
+  line-height: 1;
   text-align: center;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.22);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.22);
   pointer-events: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-}
-
-.stageCharacterNameTag::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -4px;
-  width: 8px;
-  height: 8px;
-  background: rgba(15, 23, 42, 0.88);
-  border-left: 1px solid rgba(15, 23, 42, 0.8);
-  border-top: 1px solid rgba(15, 23, 42, 0.8);
-  transform: translateX(-50%) rotate(45deg);
+  gap: 1px;
 }
 
 .stageCharacterNameTag strong,
@@ -432,26 +419,28 @@ button {
 
 .stageCharacterNameTag strong {
   color: #ffffff;
-  text-shadow: 0 1px 0 rgba(15, 23, 42, 0.48);
+  text-shadow:
+    -1px 0 rgba(15, 23, 42, 0.82),
+    0 1px rgba(15, 23, 42, 0.82),
+    1px 0 rgba(15, 23, 42, 0.82),
+    0 -1px rgba(15, 23, 42, 0.82);
 }
 
 .stageCharacterGuildTag {
-  color: #ffd45c;
-  font-size: 10px;
+  color: #ffe16c;
+  font-size: 9px;
   font-weight: 800;
-  text-shadow: 0 1px 0 rgba(15, 23, 42, 0.58);
+  text-shadow:
+    -1px 0 rgba(15, 23, 42, 0.82),
+    0 1px rgba(15, 23, 42, 0.82),
+    1px 0 rgba(15, 23, 42, 0.82),
+    0 -1px rgba(15, 23, 42, 0.82);
 }
 
 .stageCharacterHitbox.selected .stageCharacterNameTag {
-  border-color: rgba(129, 140, 248, 0.92);
-  background: rgba(30, 41, 59, 0.94);
+  border-color: rgba(129, 140, 248, 0.48);
+  background: rgba(22, 28, 45, 0.88);
   color: #ffffff;
-}
-
-.stageCharacterHitbox.selected .stageCharacterNameTag::before {
-  background: rgba(30, 41, 59, 0.94);
-  border-left-color: rgba(129, 140, 248, 0.92);
-  border-top-color: rgba(129, 140, 248, 0.92);
 }
 
 .sceneObjectImage {

@@ -604,6 +604,7 @@ function formatRequestError(data, fallbackMessage) {
 
 export default function App() {
   const audioRef = useRef(null);
+  const guildHydrationRef = useRef(new Set());
 
   const [activePanel, setActivePanel] = useState("scene");
 
@@ -868,6 +869,71 @@ export default function App() {
       }
     };
   }, [selectedMapPreset]);
+
+  useEffect(() => {
+    if (!hasLoadedSavedScene) return;
+
+    const targets = partyMembers.filter((member) => {
+      if (!member?.ocid) return false;
+      if (member.guildName && member.guildName.trim()) return false;
+      if (guildHydrationRef.current.has(member.id)) return false;
+      return true;
+    });
+
+    if (targets.length === 0) return;
+
+    targets.forEach((member) => guildHydrationRef.current.add(member.id));
+
+    let cancelled = false;
+
+    const hydrateGuildNames = async () => {
+      const results = await Promise.all(
+        targets.map(async (member) => {
+          try {
+            const response = await fetch(
+              `${API_BASE_URL}/api/maple/basic?ocid=${encodeURIComponent(member.ocid)}`
+            );
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok || !data.success) {
+              return null;
+            }
+
+            return {
+              id: member.id,
+              guildName: data.character_guild_name || "",
+            };
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      if (cancelled) return;
+
+      const nextGuildMap = new Map(
+        results
+          .filter((item) => item && item.guildName)
+          .map((item) => [item.id, item.guildName])
+      );
+
+      if (nextGuildMap.size === 0) return;
+
+      setPartyMembers((prev) =>
+        prev.map((member) =>
+          nextGuildMap.has(member.id)
+            ? { ...member, guildName: nextGuildMap.get(member.id) }
+            : member
+        )
+      );
+    };
+
+    void hydrateGuildNames();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [API_BASE_URL, hasLoadedSavedScene, partyMembers]);
 
   const playMusicForPreset = async (preset) => {
     const audio = audioRef.current;
