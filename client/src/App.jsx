@@ -1131,6 +1131,12 @@ export default function App() {
   const displayBackgroundUrl = processedBackgroundUrl || backgroundUrl;
   const hasBgm = Boolean(selectedMapPreset.bgmPath);
   const stageSkyGradient = getPresetGradientCss(selectedMapPreset);
+  const stageBackgroundSize =
+    displayBackgroundUrl && backgroundFit === "cover"
+      ? `${100 * backgroundZoom}% auto`
+      : displayBackgroundUrl
+        ? "contain"
+        : undefined;
   const backdropAtmosphereUrl = createBackdropImageUrl(selectedMapPreset);
   const stageBackgroundImages = displayBackgroundUrl
     ? [
@@ -2207,13 +2213,6 @@ export default function App() {
       selected: selectedObjectIds.includes(object.id),
     })),
   ].sort((a, b) => b.y - a.y);
-
-  const stageBackgroundSize =
-    displayBackgroundUrl && backgroundFit === "cover"
-      ? `${100 * backgroundZoom}% auto`
-      : displayBackgroundUrl
-        ? "contain"
-        : undefined;
 
   return (
     <main className="page">
