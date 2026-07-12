@@ -2,9 +2,14 @@
 import "./App.css";
 
 const STORAGE_KEY = "maple-avatar-studio-scene-v2";
+const PRODUCTION_API_BASE_URL = "https://maple-avatar-studio-api.onrender.com";
+const LOCAL_API_BASE_URL = "http://localhost:4000";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ||
-  "http://localhost:4000";
+  (typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    ? LOCAL_API_BASE_URL
+    : PRODUCTION_API_BASE_URL);
 const MSIO_BASE_URL = "https://maplestory.io/api/gms/238";
 
 const STAGE_WIDTH = 720;
