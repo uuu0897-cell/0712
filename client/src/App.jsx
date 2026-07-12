@@ -62,6 +62,7 @@ const SCENE_PRESETS = [
     zoom: 4.35,
     positionX: 42,
     positionY: 78,
+    spawnReference: { zoom: 5, positionX: 40, positionY: 40 },
     fillColor: "#bfeeff",
     skyGradient: createSkyGradient("#dff4ff", "#f8fdff"),
     defaultCharacterY: CHARACTER_LANDING_Y,
@@ -85,6 +86,7 @@ const SCENE_PRESETS = [
     zoom: 1.55,
     positionX: 49,
     positionY: 66,
+    spawnReference: { zoom: 1.7, positionX: 49, positionY: 49 },
     fillColor: "#d9f7ce",
     skyGradient: createSkyGradient("#d8f4de", "#f2fff8"),
     defaultCharacterY: CHARACTER_LANDING_Y,
@@ -108,6 +110,7 @@ const SCENE_PRESETS = [
     zoom: 4.15,
     positionX: 48,
     positionY: 76,
+    spawnReference: { zoom: 4.6, positionX: 48, positionY: 48 },
     fillColor: "#d8d1ca",
     skyGradient: createSkyGradient("#ebe2db", "#faf7f4"),
     defaultCharacterY: CHARACTER_LANDING_Y,
@@ -131,6 +134,7 @@ const SCENE_PRESETS = [
     zoom: 4.2,
     positionX: 46,
     positionY: 74,
+    spawnReference: { zoom: 4.6, positionX: 44, positionY: 46 },
     fillColor: "#bfefff",
     skyGradient: createSkyGradient("#c9f2ff", "#f6fdff"),
     defaultCharacterY: CHARACTER_LANDING_Y,
@@ -154,6 +158,7 @@ const SCENE_PRESETS = [
     zoom: 4.35,
     positionX: 48,
     positionY: 78,
+    spawnReference: { zoom: 4.8, positionX: 47, positionY: 45 },
     fillColor: "#7ec8ff",
     skyGradient: createSkyGradient("#a9dfff", "#eef8ff"),
     defaultCharacterY: CHARACTER_LANDING_Y,
@@ -178,6 +183,7 @@ const SCENE_PRESETS = [
     zoom: 4.3,
     positionX: 50,
     positionY: 78,
+    spawnReference: { zoom: 4.8, positionX: 49, positionY: 46 },
     fillColor: "#e4d8ca",
     skyGradient: createSkyGradient("#eadfce", "#fbf7f1"),
     defaultCharacterY: CHARACTER_LANDING_Y,
@@ -202,6 +208,7 @@ const SCENE_PRESETS = [
     zoom: 4.15,
     positionX: 50,
     positionY: 73,
+    spawnReference: { zoom: 4.6, positionX: 50, positionY: 46 },
     fillColor: "#dff4ff",
     skyGradient: createSkyGradient("#e7f7ff", "#ffffff"),
     defaultCharacterY: CHARACTER_LANDING_Y,
@@ -226,6 +233,7 @@ const SCENE_PRESETS = [
     zoom: 4,
     positionX: 49,
     positionY: 76,
+    spawnReference: { zoom: 4.4, positionX: 49, positionY: 48 },
     fillColor: "#d3f3ff",
     skyGradient: createSkyGradient("#c8efff", "#f4fcff"),
     defaultCharacterY: CHARACTER_LANDING_Y,
@@ -250,6 +258,7 @@ const SCENE_PRESETS = [
     zoom: 4.35,
     positionX: 50,
     positionY: 79,
+    spawnReference: { zoom: 4.8, positionX: 50, positionY: 48 },
     fillColor: "#f5e5c4",
     skyGradient: createSkyGradient("#f5dfb3", "#fff7e9"),
     defaultCharacterY: CHARACTER_LANDING_Y,
@@ -459,28 +468,44 @@ function getDefaultCharacterPosition(index, defaultY) {
   };
 }
 
-function getPresetCharacterPosition(preset, index) {
-  const spawnPoints = preset?.spawnPoints || [];
-  const spawnPoint = spawnPoints[index];
+function buildBackgroundDrawMetrics(image, zoom, positionX, positionY) {
+  const drawWidth = STAGE_WIDTH * zoom;
+  const drawHeight = image.height * (drawWidth / image.width);
+  const drawX = (STAGE_WIDTH - drawWidth) * (positionX / 100);
+  const drawY = (STAGE_HEIGHT - drawHeight) * (positionY / 100);
 
-  if (spawnPoint) {
-    return {
-      x: spawnPoint.x,
-      y: spawnPoint.y,
-    };
-  }
-
-  return getDefaultCharacterPosition(index, preset?.defaultCharacterY || CHARACTER_LANDING_Y);
+  return {
+    drawWidth,
+    drawHeight,
+    drawX,
+    drawY,
+  };
 }
 
-function getPresetGradientCss(preset) {
-  if (!preset?.skyGradient) return "";
-  return `linear-gradient(180deg, ${preset.skyGradient.top} 0%, ${preset.skyGradient.bottom} 100%)`;
+function convertStagePointBetweenViews(point, image, referenceView, nextView) {
+  const referenceMetrics = buildBackgroundDrawMetrics(
+    image,
+    referenceView.zoom,
+    referenceView.positionX,
+    referenceView.positionY
+  );
+  const nextMetrics = buildBackgroundDrawMetrics(
+    image,
+    nextView.zoom,
+    nextView.positionX,
+    nextView.positionY
+  );
+
+  const normalizedX = (point.x - referenceMetrics.drawX) / referenceMetrics.drawWidth;
+  const normalizedY = (point.y - referenceMetrics.drawY) / referenceMetrics.drawHeight;
+
+  return {
+    x: Math.round(nextMetrics.drawX + normalizedX * nextMetrics.drawWidth),
+    y: Math.round(nextMetrics.drawY + normalizedY * nextMetrics.drawHeight),
+  };
 }
 
-function createMemberFromCharacter(data, index, preset) {
-  const position = getPresetCharacterPosition(preset, index);
-
+function createMemberFromCharacter(data, position) {
   return {
     id: crypto.randomUUID(),
     characterName: data.character_name,
@@ -496,6 +521,24 @@ function createMemberFromCharacter(data, index, preset) {
     y: position.y,
     scale: 1,
   };
+}
+
+function getCharacterPositionFromSpawnPoints(spawnPoints, defaultY, index) {
+  const spawnPoint = spawnPoints?.[index];
+
+  if (spawnPoint) {
+    return {
+      x: spawnPoint.x,
+      y: spawnPoint.y,
+    };
+  }
+
+  return getDefaultCharacterPosition(index, defaultY || CHARACTER_LANDING_Y);
+}
+
+function getPresetGradientCss(preset) {
+  if (!preset?.skyGradient) return "";
+  return `linear-gradient(180deg, ${preset.skyGradient.top} 0%, ${preset.skyGradient.bottom} 100%)`;
 }
 
 function extractDetailMessage(detail) {
@@ -548,6 +591,7 @@ export default function App() {
   const [backgroundPositionX, setBackgroundPositionX] = useState(50);
   const [backgroundPositionY, setBackgroundPositionY] = useState(50);
   const [isMapLoading, setIsMapLoading] = useState(false);
+  const [computedSpawnPointsByPreset, setComputedSpawnPointsByPreset] = useState({});
 
   const [sceneObjects, setSceneObjects] = useState([]);
   const [selectedObjectIds, setSelectedObjectIds] = useState([]);
@@ -601,6 +645,17 @@ export default function App() {
   const displayBackgroundUrl = processedBackgroundUrl || backgroundUrl;
   const hasBgm = Boolean(selectedMapPreset.bgmPath);
   const stageSkyGradient = getPresetGradientCss(selectedMapPreset);
+
+  const getPresetCharacterPosition = (preset, index) => {
+    const spawnPoints =
+      computedSpawnPointsByPreset[preset?.value] || preset?.spawnPoints || [];
+
+    return getCharacterPositionFromSpawnPoints(
+      spawnPoints,
+      preset?.defaultCharacterY,
+      index
+    );
+  };
 
   const getSceneSnapshot = () => ({
     partyMembers,
@@ -809,14 +864,29 @@ export default function App() {
   const prepareMapImage = async (preset) => {
     if (!preset.imageUrl) {
       setProcessedBackgroundUrl("");
-      return;
+      return null;
     }
 
     setIsMapLoading(true);
     setErrorMessage("");
 
     try {
-      await loadImage(preset.imageUrl);
+      const image = await loadImage(preset.imageUrl);
+      let nextSpawnPoints = preset.spawnPoints || [];
+
+      if (preset.spawnReference && preset.spawnPoints?.length) {
+        nextSpawnPoints = preset.spawnPoints.map((point) =>
+          convertStagePointBetweenViews(point, image, preset.spawnReference, {
+            zoom: preset.zoom,
+            positionX: preset.positionX,
+            positionY: preset.positionY,
+          })
+        );
+        setComputedSpawnPointsByPreset((prev) => ({
+          ...prev,
+          [preset.value]: nextSpawnPoints,
+        }));
+      }
 
       if (preset.removeWhite) {
         const transparentUrl = await createTransparentMapImage(preset.imageUrl);
@@ -824,10 +894,13 @@ export default function App() {
       } else {
         setProcessedBackgroundUrl("");
       }
+
+      return nextSpawnPoints;
     } catch (error) {
       console.error(error);
       setProcessedBackgroundUrl("");
       setErrorMessage("맵 데이터를 불러오지 못했습니다.");
+      return null;
     } finally {
       setIsMapLoading(false);
     }
@@ -936,11 +1009,8 @@ export default function App() {
         return;
       }
 
-      const newMember = createMemberFromCharacter(
-        data,
-        partyMembers.length,
-        selectedMapPreset
-      );
+      const position = getPresetCharacterPosition(selectedMapPreset, partyMembers.length);
+      const newMember = createMemberFromCharacter(data, position);
 
       setPartyMembers((prev) => [...prev, newMember]);
       setSelectedMemberIds([newMember.id]);
@@ -1149,18 +1219,6 @@ export default function App() {
     setBackgroundPositionX(preset.positionX);
     setBackgroundPositionY(preset.positionY);
 
-    setPartyMembers((prev) =>
-      prev.map((member, index) => {
-        const position = getPresetCharacterPosition(preset, index);
-
-        return {
-        ...member,
-          x: position.x,
-          y: position.y,
-        };
-      })
-    );
-
     setSceneObjects((prev) =>
       prev.map((object) => ({
         ...object,
@@ -1168,12 +1226,30 @@ export default function App() {
       }))
     );
 
+    let nextSpawnPoints = preset.spawnPoints || [];
+
     if (preset.imageUrl) {
-      await prepareMapImage(preset);
+      nextSpawnPoints = (await prepareMapImage(preset)) || nextSpawnPoints;
     } else {
       setProcessedBackgroundUrl("");
       setIsMapLoading(false);
     }
+
+    setPartyMembers((prev) =>
+      prev.map((member, index) => {
+        const position = getCharacterPositionFromSpawnPoints(
+          nextSpawnPoints,
+          preset.defaultCharacterY,
+          index
+        );
+
+        return {
+          ...member,
+          x: position.x,
+          y: position.y,
+        };
+      })
+    );
 
     if (preset.bgmPath && isMusicOn) {
       await playMusicForPreset(preset);
