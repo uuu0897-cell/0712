@@ -1492,6 +1492,10 @@ export default function App() {
   const prepareMapImage = async (preset) => {
     if (!preset.imageUrl) {
       setProcessedBackgroundUrl("");
+      setComputedSpawnPointsByPreset((prev) => ({
+        ...prev,
+        [preset.value]: preset.spawnPoints || [],
+      }));
       return null;
     }
 
@@ -1499,22 +1503,13 @@ export default function App() {
     setErrorMessage("");
 
     try {
-      const image = await loadImage(preset.imageUrl);
-      let nextSpawnPoints = preset.spawnPoints || [];
+      await loadImage(preset.imageUrl);
+      const nextSpawnPoints = preset.spawnPoints || [];
 
-      if (preset.spawnReference && preset.spawnPoints?.length) {
-        nextSpawnPoints = preset.spawnPoints.map((point) =>
-          convertStagePointBetweenViews(point, image, preset.spawnReference, {
-            zoom: preset.zoom,
-            positionX: preset.positionX,
-            positionY: preset.positionY,
-          })
-        );
-        setComputedSpawnPointsByPreset((prev) => ({
-          ...prev,
-          [preset.value]: nextSpawnPoints,
-        }));
-      }
+      setComputedSpawnPointsByPreset((prev) => ({
+        ...prev,
+        [preset.value]: nextSpawnPoints,
+      }));
 
       if (preset.removeWhite) {
         const transparentUrl = await createTransparentMapImage(preset.imageUrl);
