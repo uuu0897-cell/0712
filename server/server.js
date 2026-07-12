@@ -10,12 +10,17 @@ const PORT = process.env.PORT || 4000;
 
 const NEXON_API_KEY = String(process.env.NEXON_API_KEY || "").trim();
 const NEXON_BASE_URL = "https://open.api.nexon.com/maplestory/v1";
+const UNION_CACHE_TTL_MS = 5 * 60 * 1000;
+const CHARACTER_CACHE_TTL_MS = 10 * 60 * 1000;
 const ALLOWED_ORIGINS = String(
   process.env.ALLOWED_ORIGINS || "http://localhost:5173,http://127.0.0.1:5173"
 )
   .split(",")
   .map((origin) => origin.trim().replace(/\/+$/, ""))
   .filter(Boolean);
+
+const unionCache = new Map();
+const characterCache = new Map();
 
 function isAllowedOrigin(origin) {
   if (!origin) return true;
@@ -111,17 +116,103 @@ function collectCharacterNames(value, names = new Set()) {
   return names;
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function nexonGetWithRetry(url, options = {}, maxRetries = 2) {
+  let attempt = 0;
+
+  while (true) {
+    try {
+      return await nexonApi.get(url, options);
+    } catch (error) {
+      const status = error.response?.status;
+
+      if (status !== 429 || attempt >= maxRetries) {
+        throw error;
+      }
+
+      const retryAfterHeader = Number(error.response?.headers?.["retry-after"]);
+      const waitMs =
+        Number.isFinite(retryAfterHeader) && retryAfterHeader > 0
+          ? retryAfterHeader * 1000
+          : 1200 * (attempt + 1);
+
+      await sleep(waitMs);
+      attempt += 1;
+    }
+  }
+}
+
+function getCachedValue(cache, key, ttlMs) {
+  const cached = cache.get(key);
+
+  if (!cached) return null;
+  if (Date.now() - cached.timestamp > ttlMs) {
+    cache.delete(key);
+    return null;
+  }
+
+  return cached.value;
+}
+
+function setCachedValue(cache, key, value) {
+  cache.set(key, {
+    value,
+    timestamp: Date.now(),
+  });
+}
+
+async function fetchCharacterByName(characterName) {
+  const cachedCharacter = getCachedValue(
+    characterCache,
+    characterName,
+    CHARACTER_CACHE_TTL_MS
+  );
+
+  if (cachedCharacter) {
+    return cachedCharacter;
+  }
+
+  const ocidResponse = await nexonGetWithRetry("/id", {
+    params: {
+      character_name: characterName,
+    },
+  });
+
+  const basicResponse = await nexonGetWithRetry("/character/basic", {
+    params: {
+      ocid: ocidResponse.data.ocid,
+    },
+  });
+
+  const result = {
+    success: true,
+    ocid: ocidResponse.data.ocid,
+    ...basicResponse.data,
+  };
+
+  setCachedValue(characterCache, characterName, result);
+  return result;
+}
+
 function handleNexonError(error, res, label) {
   const status = error.response?.status || 500;
   const data = error.response?.data || null;
   const upstreamMessage =
     data?.message || data?.error?.message || (typeof data === "string" ? data : null);
-  const userMessage =
-    status >= 500
-      ? `${label} 중 일시적인 응답 오류가 발생했습니다. ${
-          upstreamMessage || "잠시 후 다시 시도해주세요."
-        }`
-      : upstreamMessage || `${label} failed`;
+
+  let userMessage = upstreamMessage || `${label} failed`;
+
+  if (status === 429) {
+    userMessage =
+      "Too many requests right now. Please wait 10-20 seconds and try again.";
+  } else if (status >= 500) {
+    userMessage =
+      upstreamMessage ||
+      `${label} hit a temporary upstream error. Please try again later.`;
+  }
 
   console.error(`\n[${label}] failed`);
   console.error("HTTP Status:", status);
@@ -160,7 +251,7 @@ app.get("/api/maple/ocid", async (req, res) => {
       });
     }
 
-    const response = await nexonApi.get("/id", {
+    const response = await nexonGetWithRetry("/id", {
       params: {
         character_name: characterName,
       },
@@ -187,7 +278,7 @@ app.get("/api/maple/basic", async (req, res) => {
       });
     }
 
-    const response = await nexonApi.get("/character/basic", {
+    const response = await nexonGetWithRetry("/character/basic", {
       params: {
         ocid,
       },
@@ -214,25 +305,8 @@ app.get("/api/maple/character", async (req, res) => {
       });
     }
 
-    const ocidResponse = await nexonApi.get("/id", {
-      params: {
-        character_name: characterName,
-      },
-    });
-
-    const ocid = ocidResponse.data.ocid;
-
-    const basicResponse = await nexonApi.get("/character/basic", {
-      params: {
-        ocid,
-      },
-    });
-
-    res.json({
-      success: true,
-      ocid,
-      ...basicResponse.data,
-    });
+    const character = await fetchCharacterByName(characterName);
+    res.json(character);
   } catch (error) {
     return handleNexonError(error, res, "Character lookup");
   }
@@ -250,15 +324,17 @@ app.get("/api/maple/union-champion", async (req, res) => {
       });
     }
 
-    const ocidResponse = await nexonApi.get("/id", {
-      params: {
-        character_name: characterName,
-      },
-    });
+    const cachedUnion = getCachedValue(unionCache, characterName, UNION_CACHE_TTL_MS);
 
-    const unionResponse = await nexonApi.get("/user/union-champion", {
+    if (cachedUnion) {
+      return res.json(cachedUnion);
+    }
+
+    const ownerCharacter = await fetchCharacterByName(characterName);
+
+    const unionResponse = await nexonGetWithRetry("/user/union-champion", {
       params: {
-        ocid: ocidResponse.data.ocid,
+        ocid: ownerCharacter.ocid,
       },
     });
 
@@ -275,34 +351,23 @@ app.get("/api/maple/union-champion", async (req, res) => {
       });
     }
 
-    const characters = await Promise.all(
-      championNames.map(async (name) => {
-        const championOcidResponse = await nexonApi.get("/id", {
-          params: {
-            character_name: name,
-          },
-        });
+    const characters = [];
 
-        const basicResponse = await nexonApi.get("/character/basic", {
-          params: {
-            ocid: championOcidResponse.data.ocid,
-          },
-        });
+    for (const name of championNames) {
+      const character = await fetchCharacterByName(name);
+      characters.push(character);
+      await sleep(180);
+    }
 
-        return {
-          success: true,
-          ocid: championOcidResponse.data.ocid,
-          ...basicResponse.data,
-        };
-      })
-    );
-
-    res.json({
+    const payload = {
       success: true,
       characterName,
       champions: unionResponse.data,
       characters,
-    });
+    };
+
+    setCachedValue(unionCache, characterName, payload);
+    res.json(payload);
   } catch (error) {
     return handleNexonError(error, res, "Union champion lookup");
   }
