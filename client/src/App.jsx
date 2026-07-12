@@ -28,12 +28,20 @@ const SCENE_PRESETS = [
     value: "checker",
     mapId: null,
     imageUrl: "",
+    thumbnailUrl: "",
     bgmPath: "",
     zoom: 1,
     positionX: 50,
     positionY: 50,
     fillColor: "#ffffff",
     defaultCharacterY: CHARACTER_LANDING_Y,
+    spawnPoints: [
+      { x: 170, y: CHARACTER_LANDING_Y },
+      { x: 280, y: CHARACTER_LANDING_Y },
+      { x: 390, y: CHARACTER_LANDING_Y },
+      { x: 500, y: CHARACTER_LANDING_Y },
+      { x: 610, y: CHARACTER_LANDING_Y },
+    ],
     removeWhite: false,
   },
   {
@@ -41,12 +49,21 @@ const SCENE_PRESETS = [
     value: "henesys",
     mapId: 100000000,
     imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/100000000/render/0`),
+    thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/100000000/render/0`),
     bgmPath: "Bgm00/FloralLife",
     zoom: 5,
     positionX: 40,
     positionY: 40,
     fillColor: "#bfeeff",
     defaultCharacterY: CHARACTER_LANDING_Y,
+    spawnPoints: [
+      { x: 160, y: 360 },
+      { x: 252, y: 351 },
+      { x: 345, y: 344 },
+      { x: 448, y: 338 },
+      { x: 548, y: 343 },
+      { x: 635, y: 350 },
+    ],
     removeWhite: true,
   },
   {
@@ -54,12 +71,21 @@ const SCENE_PRESETS = [
     value: "ellinia",
     mapId: 101000000,
     imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/101000000/render/0`),
+    thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/101000000/render/0`),
     bgmPath: "Bgm02/WhenTheMorningComes",
     zoom: 1.7,
     positionX: 49,
     positionY: 49,
     fillColor: "#d9f7ce",
     defaultCharacterY: CHARACTER_LANDING_Y,
+    spawnPoints: [
+      { x: 158, y: 352 },
+      { x: 258, y: 345 },
+      { x: 356, y: 339 },
+      { x: 456, y: 336 },
+      { x: 560, y: 341 },
+      { x: 652, y: 348 },
+    ],
     removeWhite: true,
   },
   {
@@ -67,12 +93,21 @@ const SCENE_PRESETS = [
     value: "kerning-city",
     mapId: 103000000,
     imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/103000000/render/0`),
+    thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/103000000/render/0`),
     bgmPath: "Bgm01/BadGuys",
     zoom: 4.6,
     positionX: 48,
     positionY: 48,
     fillColor: "#d8d1ca",
     defaultCharacterY: CHARACTER_LANDING_Y,
+    spawnPoints: [
+      { x: 160, y: 356 },
+      { x: 250, y: 349 },
+      { x: 345, y: 345 },
+      { x: 445, y: 340 },
+      { x: 548, y: 346 },
+      { x: 638, y: 352 },
+    ],
     removeWhite: true,
   },
   {
@@ -80,12 +115,21 @@ const SCENE_PRESETS = [
     value: "lith-harbor",
     mapId: 104000000,
     imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/104000000/render/0`),
+    thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/104000000/render/0`),
     bgmPath: "Bgm02/AboveTheTreetops",
     zoom: 4.6,
     positionX: 44,
     positionY: 46,
     fillColor: "#bfefff",
     defaultCharacterY: CHARACTER_LANDING_Y,
+    spawnPoints: [
+      { x: 152, y: 355 },
+      { x: 242, y: 350 },
+      { x: 338, y: 347 },
+      { x: 442, y: 343 },
+      { x: 546, y: 347 },
+      { x: 640, y: 352 },
+    ],
     removeWhite: true,
   },
   {
@@ -93,12 +137,109 @@ const SCENE_PRESETS = [
     value: "ludibrium",
     mapId: 220000000,
     imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/220000000/render/0`),
+    thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/220000000/render/0`),
     bgmPath: "Bgm06/FantasticThinking",
     zoom: 4.8,
     positionX: 47,
     positionY: 45,
     fillColor: "#7ec8ff",
     defaultCharacterY: CHARACTER_LANDING_Y,
+    spawnPoints: [
+      { x: 155, y: 356 },
+      { x: 250, y: 350 },
+      { x: 348, y: 344 },
+      { x: 447, y: 340 },
+      { x: 548, y: 346 },
+      { x: 642, y: 352 },
+    ],
+    removeWhite: true,
+  },
+  {
+    label: "페리온",
+    value: "perion",
+    mapId: 102000000,
+    imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/102000000/render/0`),
+    thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/102000000/render/0`),
+    bgmPath: "",
+    zoom: 4.8,
+    positionX: 49,
+    positionY: 46,
+    fillColor: "#e4d8ca",
+    defaultCharacterY: CHARACTER_LANDING_Y,
+    spawnPoints: [
+      { x: 156, y: 360 },
+      { x: 250, y: 354 },
+      { x: 348, y: 347 },
+      { x: 446, y: 340 },
+      { x: 544, y: 347 },
+      { x: 638, y: 354 },
+    ],
+    removeWhite: true,
+  },
+  {
+    label: "오르비스",
+    value: "orbis",
+    mapId: 200000000,
+    imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/200000000/render/0`),
+    thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/200000000/render/0`),
+    bgmPath: "",
+    zoom: 4.6,
+    positionX: 50,
+    positionY: 46,
+    fillColor: "#dff4ff",
+    defaultCharacterY: CHARACTER_LANDING_Y,
+    spawnPoints: [
+      { x: 152, y: 356 },
+      { x: 246, y: 349 },
+      { x: 340, y: 344 },
+      { x: 438, y: 339 },
+      { x: 540, y: 344 },
+      { x: 636, y: 350 },
+    ],
+    removeWhite: true,
+  },
+  {
+    label: "아쿠아리움",
+    value: "aquarium",
+    mapId: 230000000,
+    imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/230000000/render/0`),
+    thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/230000000/render/0`),
+    bgmPath: "",
+    zoom: 4.4,
+    positionX: 49,
+    positionY: 48,
+    fillColor: "#d3f3ff",
+    defaultCharacterY: CHARACTER_LANDING_Y,
+    spawnPoints: [
+      { x: 150, y: 357 },
+      { x: 246, y: 351 },
+      { x: 346, y: 345 },
+      { x: 446, y: 341 },
+      { x: 546, y: 346 },
+      { x: 640, y: 352 },
+    ],
+    removeWhite: true,
+  },
+  {
+    label: "아리안트",
+    value: "ariant",
+    mapId: 260000000,
+    imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/260000000/render/0`),
+    thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/260000000/render/0`),
+    bgmPath: "",
+    zoom: 4.8,
+    positionX: 50,
+    positionY: 48,
+    fillColor: "#f5e5c4",
+    defaultCharacterY: CHARACTER_LANDING_Y,
+    spawnPoints: [
+      { x: 154, y: 358 },
+      { x: 248, y: 352 },
+      { x: 346, y: 345 },
+      { x: 446, y: 340 },
+      { x: 544, y: 346 },
+      { x: 636, y: 352 },
+    ],
     removeWhite: true,
   },
 ];
@@ -297,8 +438,22 @@ function getDefaultCharacterPosition(index, defaultY) {
   };
 }
 
-function createMemberFromCharacter(data, index, defaultY) {
-  const position = getDefaultCharacterPosition(index, defaultY);
+function getPresetCharacterPosition(preset, index) {
+  const spawnPoints = preset?.spawnPoints || [];
+  const spawnPoint = spawnPoints[index];
+
+  if (spawnPoint) {
+    return {
+      x: spawnPoint.x,
+      y: spawnPoint.y,
+    };
+  }
+
+  return getDefaultCharacterPosition(index, preset?.defaultCharacterY || CHARACTER_LANDING_Y);
+}
+
+function createMemberFromCharacter(data, index, preset) {
+  const position = getPresetCharacterPosition(preset, index);
 
   return {
     id: crypto.randomUUID(),
@@ -444,10 +599,19 @@ export default function App() {
     const snapshotPreset =
       SCENE_PRESETS.find((preset) => preset.value === snapshot.selectedMapValue) ||
       SCENE_PRESETS[0];
-    const migratedMembers = (snapshot.partyMembers || []).map((member) => ({
-      ...member,
-      y: member.y < 360 ? snapshotPreset.defaultCharacterY : member.y,
-    }));
+    const migratedMembers = (snapshot.partyMembers || []).map((member, index) => {
+      if (member.y >= 360) {
+        return member;
+      }
+
+      const position = getPresetCharacterPosition(snapshotPreset, index);
+
+      return {
+        ...member,
+        x: position.x,
+        y: position.y,
+      };
+    });
 
     setPartyMembers(migratedMembers);
     setSceneObjects(snapshot.sceneObjects || []);
@@ -742,7 +906,7 @@ export default function App() {
       const newMember = createMemberFromCharacter(
         data,
         partyMembers.length,
-        selectedMapPreset.defaultCharacterY
+        selectedMapPreset
       );
 
       setPartyMembers((prev) => [...prev, newMember]);
@@ -952,10 +1116,15 @@ export default function App() {
     setBackgroundPositionY(preset.positionY);
 
     setPartyMembers((prev) =>
-      prev.map((member) => ({
+      prev.map((member, index) => {
+        const position = getPresetCharacterPosition(preset, index);
+
+        return {
         ...member,
-        y: preset.defaultCharacterY,
-      }))
+          x: position.x,
+          y: position.y,
+        };
+      })
     );
 
     setSceneObjects((prev) =>
@@ -1664,16 +1833,33 @@ export default function App() {
               <h3>장면 설정</h3>
 
               <label>맵 프리셋</label>
-              <select
-                value={selectedMapValue}
-                onChange={(event) => applyScenePreset(event.target.value)}
-              >
-                {SCENE_PRESETS.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
+              <div className="mapPresetGrid">
+                {SCENE_PRESETS.map((item) => {
+                  const isActive = item.value === selectedMapValue;
+
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      className={`mapPresetCard ${isActive ? "active" : ""}`}
+                      onClick={() => applyScenePreset(item.value)}
+                    >
+                      <span
+                        className={`mapPresetThumbnail ${item.thumbnailUrl ? "" : "checker"}`}
+                        style={
+                          item.thumbnailUrl
+                            ? { backgroundImage: `url(${item.thumbnailUrl})` }
+                            : undefined
+                        }
+                      />
+                      <span className="mapPresetMeta">
+                        <strong>{item.label}</strong>
+                        <em>{item.mapId ? `Map ${item.mapId}` : "기본 배경"}</em>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
               {hasBgm && (
                 <div className="musicControlBox">
