@@ -17,6 +17,8 @@ const STAGE_HEIGHT = 405;
 const CHARACTER_BOTTOM_OFFSET = 90;
 const CHARACTER_LANDING_Y = 378;
 const MAX_HISTORY_LENGTH = 30;
+const imagePromiseCache = new Map();
+const transparentMapUrlCache = new Map();
 
 function createSkyGradient(topColor, bottomColor) {
   return {
@@ -402,16 +404,38 @@ const WEAPON_MOTIONS = [
 ];
 
 function loadImage(src) {
-  return new Promise((resolve, reject) => {
+  if (!src) {
+    return Promise.reject(new Error("Image src is required."));
+  }
+
+  const cachedPromise = imagePromiseCache.get(src);
+
+  if (cachedPromise) {
+    return cachedPromise;
+  }
+
+  const nextPromise = new Promise((resolve, reject) => {
     const image = new Image();
     image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
-    image.onerror = reject;
+    image.onerror = () => {
+      imagePromiseCache.delete(src);
+      reject(new Error(`Failed to load image: ${src}`));
+    };
     image.src = src;
   });
+
+  imagePromiseCache.set(src, nextPromise);
+  return nextPromise;
 }
 
 async function createTransparentMapImage(src) {
+  const cachedUrl = transparentMapUrlCache.get(src);
+
+  if (cachedUrl) {
+    return cachedUrl;
+  }
+
   const image = await loadImage(src);
 
   const canvas = document.createElement("canvas");
@@ -436,7 +460,9 @@ async function createTransparentMapImage(src) {
 
   ctx.putImageData(imageData, 0, 0);
 
-  return canvas.toDataURL("image/png");
+  const dataUrl = canvas.toDataURL("image/png");
+  transparentMapUrlCache.set(src, dataUrl);
+  return dataUrl;
 }
 
 function buildCharacterImageUrl(baseUrl, options) {
@@ -509,6 +535,7 @@ function createMemberFromCharacter(data, position) {
   return {
     id: crypto.randomUUID(),
     characterName: data.character_name,
+    guildName: data.character_guild_name || "",
     worldName: data.world_name,
     characterClass: data.character_class,
     level: data.character_level,
@@ -804,6 +831,43 @@ export default function App() {
     const timeoutId = setTimeout(() => setSaveMessage(""), 2200);
     return () => clearTimeout(timeoutId);
   }, [saveMessage]);
+
+  useEffect(() => {
+    const presetsToWarm = [
+      selectedMapPreset,
+      ...SCENE_PRESETS.filter((preset) => preset.value !== selectedMapPreset.value),
+    ].filter((preset) => preset.imageUrl);
+
+    const warmAssets = async () => {
+      for (const preset of presetsToWarm.slice(0, 4)) {
+        try {
+          await loadImage(preset.imageUrl);
+          if (preset.removeWhite) {
+            await createTransparentMapImage(preset.imageUrl);
+          }
+        } catch (error) {
+          console.error("Map asset warmup failed:", preset.value, error);
+        }
+      }
+    };
+
+    const idleCallback =
+      typeof window !== "undefined" && "requestIdleCallback" in window
+        ? window.requestIdleCallback(() => {
+            void warmAssets();
+          })
+        : setTimeout(() => {
+            void warmAssets();
+          }, 300);
+
+    return () => {
+      if (typeof idleCallback === "number") {
+        clearTimeout(idleCallback);
+      } else if (typeof window !== "undefined" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleCallback);
+      }
+    };
+  }, [selectedMapPreset]);
 
   const playMusicForPreset = async (preset) => {
     const audio = audioRef.current;
@@ -1791,7 +1855,10 @@ export default function App() {
                     }}
                   />
                   <div className="stageCharacterNameTag">
-                    {member.characterName}
+                    <strong>{member.characterName}</strong>
+                    {member.guildName ? (
+                      <span className="stageCharacterGuildTag">{member.guildName}</span>
+                    ) : null}
                   </div>
                 </div>
               );
