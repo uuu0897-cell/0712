@@ -385,11 +385,6 @@ export default function App() {
   const [musicError, setMusicError] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [unionLoading, setUnionLoading] = useState(false);
-  const [unionCandidates, setUnionCandidates] = useState([]);
-  const [selectedUnionNames, setSelectedUnionNames] = useState([]);
-  const [unionSourceName, setUnionSourceName] = useState("");
-  const [isUnionPickerOpen, setIsUnionPickerOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
 
@@ -760,110 +755,6 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadUnionChampions = async () => {
-    try {
-      const name = characterName.trim();
-
-      if (!name) {
-        setErrorMessage("유니온 챔피언을 불러올 대표 캐릭터명을 입력해주세요.");
-        return;
-      }
-
-      if (partyMembers.length >= 6) {
-        setErrorMessage("파티가 이미 가득 찼습니다.");
-        return;
-      }
-
-      setUnionLoading(true);
-      setErrorMessage("");
-      rememberScene();
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/maple/union-champion?characterName=${encodeURIComponent(name)}`
-      );
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok || !data.success) {
-        throw new Error(
-          formatRequestError(data, "유니온 챔피언 조회에 실패했습니다.")
-        );
-      }
-
-      const availableSlots = 6 - partyMembers.length;
-      const existingNames = new Set(
-        partyMembers.map((member) => member.characterName)
-      );
-
-      const nextCharacters = (data.characters || [])
-        .filter((character) => !existingNames.has(character.character_name))
-        .slice(0, availableSlots);
-
-      if (nextCharacters.length === 0) {
-        setErrorMessage("추가할 유니온 챔피언 캐릭터를 찾지 못했습니다.");
-        return;
-      }
-
-      setUnionCandidates(nextCharacters);
-      setSelectedUnionNames(
-        nextCharacters.map((character) => character.character_name)
-      );
-      setUnionSourceName(name);
-      setIsUnionPickerOpen(true);
-      setSelectedObjectIds([]);
-      setActivePanel("character");
-    } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setUnionLoading(false);
-    }
-  };
-
-  const closeUnionPicker = () => {
-    setIsUnionPickerOpen(false);
-    setUnionCandidates([]);
-    setSelectedUnionNames([]);
-    setUnionSourceName("");
-  };
-
-  const toggleUnionCandidate = (candidateName) => {
-    setSelectedUnionNames((prev) =>
-      prev.includes(candidateName)
-        ? prev.filter((name) => name !== candidateName)
-        : [...prev, candidateName]
-    );
-  };
-
-  const addSelectedUnionChampions = () => {
-    const chosenCharacters = unionCandidates.filter((character) =>
-      selectedUnionNames.includes(character.character_name)
-    );
-
-    if (chosenCharacters.length === 0) {
-      setErrorMessage("불러올 유니온 챔피언을 한 명 이상 선택해주세요.");
-      return;
-    }
-
-    rememberScene();
-
-    const newMembers = chosenCharacters.map((character, index) =>
-      createMemberFromCharacter(
-        character,
-        partyMembers.length + index,
-        selectedMapPreset.defaultCharacterY
-      )
-    );
-
-    setPartyMembers((prev) => [...prev, ...newMembers]);
-    setSelectedMemberIds(newMembers.map((member) => member.id));
-    setSelectedObjectIds([]);
-    setActivePanel("character");
-    setSaveMessage(
-      `${newMembers.length}명의 유니온 챔피언을 ${unionSourceName} 기준으로 추가했습니다.`
-    );
-    closeUnionPicker();
   };
 
   const toggleMemberSelection = (memberId) => {
@@ -1425,14 +1316,6 @@ export default function App() {
         <button onClick={addCharacter} disabled={loading}>
           {loading ? "추가 중..." : "캐릭터 추가"}
         </button>
-        <button
-          type="button"
-          className="secondarySearchButton"
-          onClick={loadUnionChampions}
-          disabled={unionLoading || loading}
-        >
-          {unionLoading ? "불러오는 중..." : "유니온 챔피언"}
-        </button>
       </section>
 
       {errorMessage && <p className="error">{errorMessage}</p>}
@@ -1614,6 +1497,9 @@ export default function App() {
                       height: `${300 * member.scale}px`,
                     }}
                   />
+                  <div className="stageCharacterNameTag">
+                    {member.characterName}
+                  </div>
                 </div>
               );
             })}
@@ -2137,91 +2023,6 @@ export default function App() {
             </button>
             <img src={previewUrl} alt="확대 미리보기" />
           </div>
-        </div>
-      )}
-
-      {isUnionPickerOpen && (
-        <div className="modalBackdrop" onClick={closeUnionPicker}>
-          <section
-            className="unionPickerModal"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="unionPickerHeader">
-              <div>
-                <h3>유니온 챔피언 선택</h3>
-                <p>
-                  {unionSourceName} 기준으로 불러온 캐릭터입니다. 장면에 추가할 캐릭터를 골라주세요.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="modalCloseButton"
-                onClick={closeUnionPicker}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="unionPickerActions">
-              <button
-                type="button"
-                onClick={() =>
-                  setSelectedUnionNames(
-                    unionCandidates.map((character) => character.character_name)
-                  )
-                }
-              >
-                전체 선택
-              </button>
-              <button type="button" onClick={() => setSelectedUnionNames([])}>
-                선택 해제
-              </button>
-            </div>
-
-            <div className="unionPickerList">
-              {unionCandidates.map((character) => {
-                const isSelected = selectedUnionNames.includes(
-                  character.character_name
-                );
-
-                return (
-                  <label
-                    key={character.ocid || character.character_name}
-                    className={`unionCandidateCard ${isSelected ? "active" : ""}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleUnionCandidate(character.character_name)}
-                    />
-                    <div>
-                      <strong>{character.character_name}</strong>
-                      <span>
-                        {character.character_class} · Lv.{character.character_level}
-                      </span>
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
-
-            <div className="unionPickerFooter">
-              <button
-                type="button"
-                className="secondaryModalButton"
-                onClick={closeUnionPicker}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className="primaryModalButton"
-                onClick={addSelectedUnionChampions}
-              >
-                선택한 캐릭터 추가
-              </button>
-            </div>
-          </section>
         </div>
       )}
     </main>
