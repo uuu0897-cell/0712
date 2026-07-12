@@ -173,7 +173,8 @@ const SCENE_PRESETS = [
     mapId: 102000000,
     imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/102000000/render/0`),
     thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/102000000/render/0`),
-    bgmPath: "",
+    bgmPath: "Bgm04/AncientMove",
+    fallbackBgmPath: "Bgm01/BadGuys",
     zoom: 4.8,
     positionX: 49,
     positionY: 46,
@@ -196,7 +197,8 @@ const SCENE_PRESETS = [
     mapId: 200000000,
     imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/200000000/render/0`),
     thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/200000000/render/0`),
-    bgmPath: "",
+    bgmPath: "Bgm07/UponTheSky",
+    fallbackBgmPath: "Bgm02/AboveTheTreetops",
     zoom: 4.6,
     positionX: 50,
     positionY: 46,
@@ -219,7 +221,8 @@ const SCENE_PRESETS = [
     mapId: 230000000,
     imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/230000000/render/0`),
     thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/230000000/render/0`),
-    bgmPath: "",
+    bgmPath: "Bgm08/Aquarium",
+    fallbackBgmPath: "Bgm00/FloralLife",
     zoom: 4.4,
     positionX: 49,
     positionY: 48,
@@ -242,7 +245,8 @@ const SCENE_PRESETS = [
     mapId: 260000000,
     imageUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/260000000/render/0`),
     thumbnailUrl: proxyImageUrl(`${MSIO_BASE_URL}/map/260000000/render/0`),
-    bgmPath: "",
+    bgmPath: "Bgm08/HotDesert",
+    fallbackBgmPath: "Bgm06/FantasticThinking",
     zoom: 4.8,
     positionX: 50,
     positionY: 48,
@@ -758,28 +762,34 @@ export default function App() {
       return;
     }
 
-    const audioUrl = `${MSIO_BASE_URL}/music/${preset.bgmPath}`;
+    const candidatePaths = [preset.bgmPath, preset.fallbackBgmPath].filter(Boolean);
 
-    if (audio.src === audioUrl && !audio.paused) {
-      setIsMusicOn(true);
-      return;
+    for (const bgmPath of candidatePaths) {
+      const audioUrl = `${MSIO_BASE_URL}/music/${bgmPath}`;
+
+      if (audio.src === audioUrl && !audio.paused) {
+        setIsMusicOn(true);
+        return;
+      }
+
+      audio.pause();
+      audio.currentTime = 0;
+      audio.src = audioUrl;
+      audio.loop = true;
+      audio.preload = "auto";
+      audio.volume = 0.45;
+
+      try {
+        await audio.play();
+        setIsMusicOn(true);
+        return;
+      } catch (error) {
+        console.error(`BGM play failed for ${bgmPath}:`, error);
+      }
     }
 
-    audio.pause();
-    audio.currentTime = 0;
-    audio.src = audioUrl;
-    audio.loop = true;
-    audio.preload = "auto";
-    audio.volume = 0.45;
-
-    try {
-      await audio.play();
-      setIsMusicOn(true);
-    } catch (error) {
-      console.error("BGM play failed:", error);
-      setIsMusicOn(false);
-      setMusicError("BGM 재생이 차단되었거나 오디오를 불러오지 못했습니다.");
-    }
+    setIsMusicOn(false);
+    setMusicError("BGM 재생이 차단되었거나 오디오를 불러오지 못했습니다.");
   };
 
   const toggleMusic = async () => {
@@ -1125,6 +1135,7 @@ export default function App() {
     if (!preset) return;
 
     rememberScene();
+    setIsMapLoading(true);
 
     if (backgroundUrl && backgroundUrl.startsWith("blob:")) {
       URL.revokeObjectURL(backgroundUrl);
@@ -1575,7 +1586,8 @@ export default function App() {
               </div>
             )}
 
-            {sceneObjects.map((object) => {
+            {!isMapLoading &&
+              sceneObjects.map((object) => {
               const isSelected = selectedObjectIds.includes(object.id);
               const objectSize = object.baseSize * object.scale;
 
@@ -1639,7 +1651,8 @@ export default function App() {
               );
             })}
 
-            {partyMembers.map((member) => {
+            {!isMapLoading &&
+              partyMembers.map((member) => {
               const imageUrl = getMemberImageUrl(member);
               const isSelected = selectedMemberIds.includes(member.id);
 

@@ -478,6 +478,25 @@ button {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 8px;
+  max-height: 332px;
+  overflow-y: auto;
+  padding-right: 4px;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.mapPresetGrid::-webkit-scrollbar {
+  width: 10px;
+}
+
+.mapPresetGrid::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+}
+
+.mapPresetGrid::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .mapPresetCard {
