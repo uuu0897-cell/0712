@@ -114,6 +114,14 @@ function collectCharacterNames(value, names = new Set()) {
 function handleNexonError(error, res, label) {
   const status = error.response?.status || 500;
   const data = error.response?.data || null;
+  const upstreamMessage =
+    data?.message || data?.error?.message || (typeof data === "string" ? data : null);
+  const userMessage =
+    status >= 500
+      ? `${label} 중 일시적인 응답 오류가 발생했습니다. ${
+          upstreamMessage || "잠시 후 다시 시도해주세요."
+        }`
+      : upstreamMessage || `${label} failed`;
 
   console.error(`\n[${label}] failed`);
   console.error("HTTP Status:", status);
@@ -125,6 +133,7 @@ function handleNexonError(error, res, label) {
   return res.status(status).json({
     success: false,
     message: `${label} failed`,
+    userMessage,
     status,
     detail: data || error.message,
   });
