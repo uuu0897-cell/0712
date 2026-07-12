@@ -19,6 +19,7 @@ const CHARACTER_LANDING_Y = 378;
 const MAX_HISTORY_LENGTH = 30;
 const imagePromiseCache = new Map();
 const transparentMapUrlCache = new Map();
+const backdropUrlCache = new Map();
 
 function createSkyGradient(topColor, bottomColor) {
   return {
@@ -29,6 +30,24 @@ function createSkyGradient(topColor, bottomColor) {
 
 function proxyImageUrl(url) {
   return `${API_BASE_URL}/api/msio/image-proxy?url=${encodeURIComponent(url)}`;
+}
+
+function createAtmosphere(config) {
+  return config;
+}
+
+function withAlpha(hexColor, alpha) {
+  const normalized = hexColor.replace("#", "");
+
+  if (normalized.length !== 6) {
+    return hexColor;
+  }
+
+  const r = Number.parseInt(normalized.slice(0, 2), 16);
+  const g = Number.parseInt(normalized.slice(2, 4), 16);
+  const b = Number.parseInt(normalized.slice(4, 6), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 const SCENE_PRESETS = [
@@ -67,6 +86,19 @@ const SCENE_PRESETS = [
     spawnReference: { zoom: 5, positionX: 40, positionY: 40 },
     fillColor: "#bfeeff",
     skyGradient: createSkyGradient("#dff4ff", "#f8fdff"),
+    atmosphere: createAtmosphere({
+      top: "#d7f1ff",
+      bottom: "#f8fdff",
+      haze: "#fff7e7",
+      sun: { x: 0.2, y: 0.18, radius: 0.2, color: "#fff2b8", alpha: 0.7 },
+      cloudRows: [
+        { y: 0.18, alpha: 0.8, scale: 1.2, count: 4, color: "#ffffff" },
+        { y: 0.29, alpha: 0.46, scale: 1, count: 5, color: "#eef7ff" },
+      ],
+      mistBands: [
+        { y: 0.68, height: 0.13, color: "#fff9eb", alpha: 0.58 },
+      ],
+    }),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 160, y: 360 },
@@ -91,6 +123,23 @@ const SCENE_PRESETS = [
     spawnReference: { zoom: 1.7, positionX: 49, positionY: 49 },
     fillColor: "#d9f7ce",
     skyGradient: createSkyGradient("#d8f4de", "#f2fff8"),
+    atmosphere: createAtmosphere({
+      top: "#d9f7de",
+      bottom: "#f4fff8",
+      haze: "#f8fff6",
+      sun: { x: 0.68, y: 0.16, radius: 0.17, color: "#f7ffe1", alpha: 0.52 },
+      cloudRows: [
+        { y: 0.14, alpha: 0.36, scale: 1.15, count: 4, color: "#f7fffb" },
+      ],
+      mistBands: [
+        { y: 0.54, height: 0.16, color: "#e8fff2", alpha: 0.34 },
+        { y: 0.72, height: 0.1, color: "#f8fff8", alpha: 0.48 },
+      ],
+      beams: [
+        { x: 0.28, width: 0.1, alpha: 0.12, color: "#efffe8" },
+        { x: 0.6, width: 0.08, alpha: 0.1, color: "#f7ffe9" },
+      ],
+    }),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 158, y: 352 },
@@ -115,6 +164,31 @@ const SCENE_PRESETS = [
     spawnReference: { zoom: 4.6, positionX: 48, positionY: 48 },
     fillColor: "#d8d1ca",
     skyGradient: createSkyGradient("#ebe2db", "#faf7f4"),
+    atmosphere: createAtmosphere({
+      top: "#d6d0d4",
+      bottom: "#f5efeb",
+      haze: "#f7ebe4",
+      sun: { x: 0.76, y: 0.18, radius: 0.16, color: "#ffd8bf", alpha: 0.34 },
+      skyline: {
+        baseY: 0.56,
+        color: "#9e95a1",
+        secondaryColor: "#857c8d",
+        alpha: 0.32,
+        blocks: [
+          [0.02, 0.09, 0.2],
+          [0.12, 0.06, 0.13],
+          [0.22, 0.08, 0.23],
+          [0.34, 0.05, 0.17],
+          [0.43, 0.07, 0.27],
+          [0.54, 0.11, 0.15],
+          [0.67, 0.08, 0.22],
+          [0.79, 0.09, 0.18],
+        ],
+      },
+      mistBands: [
+        { y: 0.65, height: 0.14, color: "#f8ede5", alpha: 0.3 },
+      ],
+    }),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 160, y: 356 },
@@ -139,6 +213,20 @@ const SCENE_PRESETS = [
     spawnReference: { zoom: 4.6, positionX: 44, positionY: 46 },
     fillColor: "#bfefff",
     skyGradient: createSkyGradient("#c9f2ff", "#f6fdff"),
+    atmosphere: createAtmosphere({
+      top: "#c6efff",
+      bottom: "#f4fcff",
+      haze: "#fff4dd",
+      sun: { x: 0.22, y: 0.17, radius: 0.18, color: "#fff0b0", alpha: 0.62 },
+      cloudRows: [
+        { y: 0.17, alpha: 0.72, scale: 1.18, count: 4, color: "#ffffff" },
+        { y: 0.32, alpha: 0.32, scale: 0.95, count: 5, color: "#eff9ff" },
+      ],
+      horizonBand: { y: 0.62, colorTop: "#9ee1ff", colorBottom: "#d9f5ff", alpha: 0.5 },
+      mistBands: [
+        { y: 0.68, height: 0.1, color: "#fff7e8", alpha: 0.44 },
+      ],
+    }),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 152, y: 355 },
@@ -163,6 +251,24 @@ const SCENE_PRESETS = [
     spawnReference: { zoom: 4.8, positionX: 47, positionY: 45 },
     fillColor: "#7ec8ff",
     skyGradient: createSkyGradient("#a9dfff", "#eef8ff"),
+    atmosphere: createAtmosphere({
+      top: "#9ed8ff",
+      bottom: "#f1f8ff",
+      haze: "#ffe9ff",
+      sun: { x: 0.78, y: 0.14, radius: 0.18, color: "#ffe9ff", alpha: 0.42 },
+      cloudRows: [
+        { y: 0.16, alpha: 0.62, scale: 1.12, count: 4, color: "#fff7ff" },
+        { y: 0.3, alpha: 0.3, scale: 0.88, count: 6, color: "#eef4ff" },
+      ],
+      sparkles: [
+        { x: 0.18, y: 0.22, size: 0.012, alpha: 0.55 },
+        { x: 0.52, y: 0.18, size: 0.01, alpha: 0.42 },
+        { x: 0.82, y: 0.27, size: 0.012, alpha: 0.48 },
+      ],
+      mistBands: [
+        { y: 0.64, height: 0.12, color: "#fff1fb", alpha: 0.24 },
+      ],
+    }),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 155, y: 356 },
@@ -188,6 +294,28 @@ const SCENE_PRESETS = [
     spawnReference: { zoom: 4.8, positionX: 49, positionY: 46 },
     fillColor: "#e4d8ca",
     skyGradient: createSkyGradient("#eadfce", "#fbf7f1"),
+    atmosphere: createAtmosphere({
+      top: "#dfceb8",
+      bottom: "#f8f0e5",
+      haze: "#f7dfc4",
+      sun: { x: 0.78, y: 0.18, radius: 0.18, color: "#ffcf8d", alpha: 0.36 },
+      mesa: {
+        baseY: 0.58,
+        color: "#caa98a",
+        secondaryColor: "#b18d72",
+        alpha: 0.28,
+        ridges: [
+          [0, 0.2, 0.16],
+          [0.18, 0.18, 0.24],
+          [0.4, 0.22, 0.18],
+          [0.63, 0.16, 0.22],
+          [0.8, 0.2, 0.17],
+        ],
+      },
+      mistBands: [
+        { y: 0.7, height: 0.16, color: "#f7dcc1", alpha: 0.32 },
+      ],
+    }),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 156, y: 360 },
@@ -213,6 +341,20 @@ const SCENE_PRESETS = [
     spawnReference: { zoom: 4.6, positionX: 50, positionY: 46 },
     fillColor: "#dff4ff",
     skyGradient: createSkyGradient("#e7f7ff", "#ffffff"),
+    atmosphere: createAtmosphere({
+      top: "#e9f7ff",
+      bottom: "#ffffff",
+      haze: "#ffffff",
+      sun: { x: 0.55, y: 0.14, radius: 0.18, color: "#ffffff", alpha: 0.66 },
+      cloudRows: [
+        { y: 0.16, alpha: 0.86, scale: 1.15, count: 4, color: "#ffffff" },
+        { y: 0.31, alpha: 0.68, scale: 1.06, count: 5, color: "#f7fbff" },
+      ],
+      mistBands: [
+        { y: 0.58, height: 0.14, color: "#ffffff", alpha: 0.52 },
+        { y: 0.72, height: 0.1, color: "#eef8ff", alpha: 0.34 },
+      ],
+    }),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 152, y: 356 },
@@ -238,6 +380,27 @@ const SCENE_PRESETS = [
     spawnReference: { zoom: 4.4, positionX: 49, positionY: 48 },
     fillColor: "#d3f3ff",
     skyGradient: createSkyGradient("#c8efff", "#f4fcff"),
+    atmosphere: createAtmosphere({
+      top: "#8edbff",
+      bottom: "#c9f2ff",
+      haze: "#d4f7ff",
+      sun: { x: 0.76, y: 0.12, radius: 0.2, color: "#9cecff", alpha: 0.22 },
+      underwater: {
+        beamColor: "#dcffff",
+        beamAlpha: 0.12,
+        causticColor: "#ffffff",
+        causticAlpha: 0.2,
+      },
+      mistBands: [
+        { y: 0.62, height: 0.12, color: "#c2f4ff", alpha: 0.2 },
+        { y: 0.76, height: 0.12, color: "#ecffff", alpha: 0.2 },
+      ],
+      bubbles: [
+        { x: 0.14, y: 0.18, r: 0.02, alpha: 0.28 },
+        { x: 0.86, y: 0.28, r: 0.014, alpha: 0.2 },
+        { x: 0.62, y: 0.14, r: 0.012, alpha: 0.18 },
+      ],
+    }),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 150, y: 357 },
@@ -263,6 +426,21 @@ const SCENE_PRESETS = [
     spawnReference: { zoom: 4.8, positionX: 50, positionY: 48 },
     fillColor: "#f5e5c4",
     skyGradient: createSkyGradient("#f5dfb3", "#fff7e9"),
+    atmosphere: createAtmosphere({
+      top: "#f6deb2",
+      bottom: "#fff7e7",
+      haze: "#ffefc7",
+      sun: { x: 0.75, y: 0.16, radius: 0.18, color: "#ffd985", alpha: 0.36 },
+      dunes: {
+        baseY: 0.64,
+        color: "#e9c980",
+        secondaryColor: "#dcb66a",
+        alpha: 0.34,
+      },
+      mistBands: [
+        { y: 0.7, height: 0.14, color: "#ffe5ad", alpha: 0.24 },
+      ],
+    }),
     defaultCharacterY: CHARACTER_LANDING_Y,
     spawnPoints: [
       { x: 154, y: 358 },
@@ -568,6 +746,286 @@ function getPresetGradientCss(preset) {
   return `linear-gradient(180deg, ${preset.skyGradient.top} 0%, ${preset.skyGradient.bottom} 100%)`;
 }
 
+function drawCloud(ctx, x, y, width, height, color, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(x, y, width * 0.24, height * 0.38, 0, 0, Math.PI * 2);
+  ctx.ellipse(x - width * 0.18, y + height * 0.02, width * 0.2, height * 0.28, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + width * 0.16, y + height * 0.02, width * 0.22, height * 0.3, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y - height * 0.12, width * 0.18, height * 0.22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawCloudRows(ctx, width, height, cloudRows = []) {
+  cloudRows.forEach((row) => {
+    const count = row.count || 4;
+
+    for (let index = 0; index < count; index += 1) {
+      const ratio = count === 1 ? 0.5 : index / (count - 1);
+      const x = width * (0.08 + ratio * 0.84) + Math.sin(index * 1.9) * width * 0.018;
+      const y = height * row.y + Math.cos(index * 2.4) * height * 0.02;
+      const cloudWidth = width * (0.16 + (index % 2) * 0.028) * (row.scale || 1);
+      const cloudHeight = height * (0.07 + ((index + 1) % 2) * 0.012) * (row.scale || 1);
+
+      drawCloud(ctx, x, y, cloudWidth, cloudHeight, row.color || "#ffffff", row.alpha || 0.6);
+    }
+  });
+}
+
+function drawMistBands(ctx, width, height, mistBands = []) {
+  mistBands.forEach((band) => {
+    const top = height * band.y;
+    const bandHeight = height * band.height;
+    const gradient = ctx.createLinearGradient(0, top, 0, top + bandHeight);
+    gradient.addColorStop(0, withAlpha(band.color, 0));
+    gradient.addColorStop(0.35, withAlpha(band.color, band.alpha));
+    gradient.addColorStop(1, withAlpha(band.color, 0));
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, top, width, bandHeight);
+  });
+}
+
+function drawSunGlow(ctx, width, height, sun) {
+  if (!sun) return;
+
+  const gradient = ctx.createRadialGradient(
+    width * sun.x,
+    height * sun.y,
+    0,
+    width * sun.x,
+    height * sun.y,
+    width * sun.radius
+  );
+
+  gradient.addColorStop(0, withAlpha(sun.color, sun.alpha));
+  gradient.addColorStop(0.6, withAlpha(sun.color, sun.alpha * 0.42));
+  gradient.addColorStop(1, withAlpha(sun.color, 0));
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+}
+
+function drawVerticalBeams(ctx, width, height, beams = []) {
+  beams.forEach((beam) => {
+    const left = width * (beam.x - beam.width / 2);
+    const beamWidth = width * beam.width;
+    const gradient = ctx.createLinearGradient(left, 0, left + beamWidth, 0);
+    gradient.addColorStop(0, withAlpha(beam.color, 0));
+    gradient.addColorStop(0.5, withAlpha(beam.color, beam.alpha));
+    gradient.addColorStop(1, withAlpha(beam.color, 0));
+    ctx.fillStyle = gradient;
+    ctx.fillRect(left, 0, beamWidth, height);
+  });
+}
+
+function drawSparkles(ctx, width, height, sparkles = []) {
+  ctx.save();
+  sparkles.forEach((sparkle) => {
+    const x = width * sparkle.x;
+    const y = height * sparkle.y;
+    const size = width * sparkle.size;
+
+    ctx.globalAlpha = sparkle.alpha;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = Math.max(1, size * 0.18);
+    ctx.beginPath();
+    ctx.moveTo(x - size, y);
+    ctx.lineTo(x + size, y);
+    ctx.moveTo(x, y - size);
+    ctx.lineTo(x, y + size);
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawSkyline(ctx, width, height, skyline) {
+  if (!skyline) return;
+
+  const top = height * skyline.baseY;
+
+  ctx.save();
+  ctx.globalAlpha = skyline.alpha;
+  skyline.blocks.forEach(([leftRatio, widthRatio, heightRatio], index) => {
+    const left = width * leftRatio;
+    const blockWidth = width * widthRatio;
+    const blockHeight = height * heightRatio;
+
+    ctx.fillStyle = index % 2 === 0 ? skyline.color : skyline.secondaryColor;
+    ctx.fillRect(left, top - blockHeight, blockWidth, blockHeight);
+  });
+  ctx.restore();
+}
+
+function drawMesa(ctx, width, height, mesa) {
+  if (!mesa) return;
+
+  const top = height * mesa.baseY;
+
+  ctx.save();
+  ctx.globalAlpha = mesa.alpha;
+  mesa.ridges.forEach(([leftRatio, widthRatio, heightRatio], index) => {
+    const left = width * leftRatio;
+    const ridgeWidth = width * widthRatio;
+    const ridgeHeight = height * heightRatio;
+
+    ctx.fillStyle = index % 2 === 0 ? mesa.color : mesa.secondaryColor;
+    ctx.beginPath();
+    ctx.moveTo(left, top);
+    ctx.lineTo(left + ridgeWidth * 0.18, top - ridgeHeight * 0.72);
+    ctx.lineTo(left + ridgeWidth * 0.52, top - ridgeHeight);
+    ctx.lineTo(left + ridgeWidth * 0.82, top - ridgeHeight * 0.48);
+    ctx.lineTo(left + ridgeWidth, top);
+    ctx.closePath();
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
+function drawDunes(ctx, width, height, dunes) {
+  if (!dunes) return;
+
+  const top = height * dunes.baseY;
+  const gradient = ctx.createLinearGradient(0, top, 0, height);
+  gradient.addColorStop(0, withAlpha(dunes.color, dunes.alpha));
+  gradient.addColorStop(1, withAlpha(dunes.secondaryColor, dunes.alpha));
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.moveTo(0, height);
+  ctx.lineTo(0, top);
+
+  for (let index = 0; index <= 8; index += 1) {
+    const x = (width / 8) * index;
+    const y = top + Math.sin(index * 1.2) * height * 0.03;
+    ctx.quadraticCurveTo(x - width / 16, y - height * 0.05, x, y);
+  }
+
+  ctx.lineTo(width, height);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawHorizonBand(ctx, width, height, horizonBand) {
+  if (!horizonBand) return;
+
+  const top = height * horizonBand.y;
+  const gradient = ctx.createLinearGradient(0, top, 0, height);
+  gradient.addColorStop(0, withAlpha(horizonBand.colorTop, 0));
+  gradient.addColorStop(0.4, withAlpha(horizonBand.colorTop, horizonBand.alpha));
+  gradient.addColorStop(1, withAlpha(horizonBand.colorBottom, horizonBand.alpha));
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, top, width, height - top);
+}
+
+function drawUnderwaterEffects(ctx, width, height, underwater) {
+  if (!underwater) return;
+
+  for (let index = 0; index < 5; index += 1) {
+    const beamX = width * (0.12 + index * 0.19);
+    const beamWidth = width * 0.08;
+    const gradient = ctx.createLinearGradient(beamX, 0, beamX + beamWidth, 0);
+    gradient.addColorStop(0, withAlpha(underwater.beamColor, 0));
+    gradient.addColorStop(0.5, withAlpha(underwater.beamColor, underwater.beamAlpha));
+    gradient.addColorStop(1, withAlpha(underwater.beamColor, 0));
+    ctx.fillStyle = gradient;
+    ctx.fillRect(beamX, 0, beamWidth, height);
+  }
+
+  ctx.save();
+  ctx.strokeStyle = withAlpha(underwater.causticColor, underwater.causticAlpha);
+  ctx.lineWidth = 2;
+
+  for (let row = 0; row < 5; row += 1) {
+    const y = height * (0.12 + row * 0.12);
+    ctx.beginPath();
+
+    for (let index = 0; index <= 12; index += 1) {
+      const x = (width / 12) * index;
+      const waveY = y + Math.sin(index * 1.4 + row) * height * 0.012;
+
+      if (index === 0) {
+        ctx.moveTo(x, waveY);
+      } else {
+        ctx.lineTo(x, waveY);
+      }
+    }
+
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawBubbles(ctx, width, height, bubbles = []) {
+  ctx.save();
+  bubbles.forEach((bubble) => {
+    const x = width * bubble.x;
+    const y = height * bubble.y;
+    const radius = width * bubble.r;
+    ctx.globalAlpha = bubble.alpha;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function createBackdropImageUrl(preset) {
+  if (!preset?.atmosphere || typeof document === "undefined") {
+    return "";
+  }
+
+  const cachedUrl = backdropUrlCache.get(preset.value);
+
+  if (cachedUrl) {
+    return cachedUrl;
+  }
+
+  const canvas = document.createElement("canvas");
+  const width = STAGE_WIDTH * 2;
+  const height = STAGE_HEIGHT * 2;
+
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d");
+  const atmosphere = preset.atmosphere;
+  const sky = ctx.createLinearGradient(0, 0, 0, height);
+
+  sky.addColorStop(0, atmosphere.top || preset.skyGradient?.top || "#eaf6ff");
+  sky.addColorStop(1, atmosphere.bottom || preset.skyGradient?.bottom || "#ffffff");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, width, height);
+
+  drawSunGlow(ctx, width, height, atmosphere.sun);
+  drawVerticalBeams(ctx, width, height, atmosphere.beams);
+  drawCloudRows(ctx, width, height, atmosphere.cloudRows);
+  drawSkyline(ctx, width, height, atmosphere.skyline);
+  drawMesa(ctx, width, height, atmosphere.mesa);
+  drawDunes(ctx, width, height, atmosphere.dunes);
+  drawHorizonBand(ctx, width, height, atmosphere.horizonBand);
+  drawMistBands(ctx, width, height, atmosphere.mistBands);
+  drawUnderwaterEffects(ctx, width, height, atmosphere.underwater);
+  drawBubbles(ctx, width, height, atmosphere.bubbles);
+  drawSparkles(ctx, width, height, atmosphere.sparkles);
+
+  if (atmosphere.haze) {
+    const haze = ctx.createLinearGradient(0, height * 0.52, 0, height);
+    haze.addColorStop(0, withAlpha(atmosphere.haze, 0));
+    haze.addColorStop(1, withAlpha(atmosphere.haze, 0.18));
+    ctx.fillStyle = haze;
+    ctx.fillRect(0, height * 0.52, width, height * 0.48);
+  }
+
+  const dataUrl = canvas.toDataURL("image/png");
+  backdropUrlCache.set(preset.value, dataUrl);
+  return dataUrl;
+}
+
 function extractDetailMessage(detail) {
   if (!detail) return "";
   if (typeof detail === "string") return detail;
@@ -673,6 +1131,39 @@ export default function App() {
   const displayBackgroundUrl = processedBackgroundUrl || backgroundUrl;
   const hasBgm = Boolean(selectedMapPreset.bgmPath);
   const stageSkyGradient = getPresetGradientCss(selectedMapPreset);
+  const backdropAtmosphereUrl = createBackdropImageUrl(selectedMapPreset);
+  const stageBackgroundImages = displayBackgroundUrl
+    ? [
+        `url(${displayBackgroundUrl})`,
+        backdropAtmosphereUrl
+          ? `url(${backdropAtmosphereUrl})`
+          : stageSkyGradient || null,
+      ].filter(Boolean)
+    : backdropAtmosphereUrl
+      ? [`url(${backdropAtmosphereUrl})`]
+      : stageSkyGradient
+        ? [stageSkyGradient]
+        : [];
+  const stageBackgroundSizes = displayBackgroundUrl
+    ? [
+        stageBackgroundSize,
+        backdropAtmosphereUrl ? "cover" : "cover",
+      ]
+    : backdropAtmosphereUrl || stageSkyGradient
+      ? ["cover"]
+      : [];
+  const stageBackgroundPositions = displayBackgroundUrl
+    ? [
+        `${backgroundPositionX}% ${backgroundPositionY}%`,
+        "center",
+      ]
+    : backdropAtmosphereUrl || stageSkyGradient
+      ? ["center"]
+      : [];
+  const stageBackgroundRepeats =
+    stageBackgroundImages.length > 0
+      ? stageBackgroundImages.map(() => "no-repeat")
+      : [];
 
   const getPresetCharacterPosition = (preset, index) => {
     const spawnPoints =
@@ -842,6 +1333,7 @@ export default function App() {
     const warmAssets = async () => {
       for (const preset of presetsToWarm.slice(0, 4)) {
         try {
+          createBackdropImageUrl(preset);
           await loadImage(preset.imageUrl);
           if (preset.removeWhite) {
             await createTransparentMapImage(preset.imageUrl);
@@ -1472,6 +1964,7 @@ export default function App() {
   const renderBackground = async (ctx, options = {}) => {
     const includeBackground = options.includeBackground ?? true;
     const transparent = options.transparent ?? false;
+    const backdropUrl = backdropAtmosphereUrl;
 
     if (!includeBackground) {
       if (!transparent) {
@@ -1494,8 +1987,19 @@ export default function App() {
       ctx.fillRect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
     }
 
+    if (backdropUrl) {
+      const backdropImage = await loadImage(backdropUrl);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(backdropImage, 0, 0, STAGE_WIDTH, STAGE_HEIGHT);
+    }
+
     if (!displayBackgroundUrl) {
       if (transparent) return;
+
+      if (backdropUrl) {
+        return;
+      }
 
       const tileSize = 24;
 
@@ -1762,16 +2266,22 @@ export default function App() {
             className={`stage ${displayBackgroundUrl ? "" : "checker"}`}
             style={{
               backgroundColor: selectedMapPreset.fillColor,
-              backgroundImage: displayBackgroundUrl
-                ? `url(${displayBackgroundUrl})${stageSkyGradient ? `, ${stageSkyGradient}` : ""}`
-                : stageSkyGradient || undefined,
-              backgroundSize: displayBackgroundUrl
-                ? `${stageBackgroundSize}, cover`
-                : undefined,
-              backgroundPosition: displayBackgroundUrl
-                ? `${backgroundPositionX}% ${backgroundPositionY}%, center`
-                : undefined,
-              backgroundRepeat: displayBackgroundUrl ? "no-repeat, no-repeat" : undefined,
+              backgroundImage:
+                stageBackgroundImages.length > 0
+                  ? stageBackgroundImages.join(", ")
+                  : undefined,
+              backgroundSize:
+                stageBackgroundSizes.length > 0
+                  ? stageBackgroundSizes.join(", ")
+                  : undefined,
+              backgroundPosition:
+                stageBackgroundPositions.length > 0
+                  ? stageBackgroundPositions.join(", ")
+                  : undefined,
+              backgroundRepeat:
+                stageBackgroundRepeats.length > 0
+                  ? stageBackgroundRepeats.join(", ")
+                  : undefined,
             }}
             onPointerMove={moveMemberToPointer}
             onPointerUp={() => setDragInfo(null)}
