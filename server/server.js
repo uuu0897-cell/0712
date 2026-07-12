@@ -14,32 +14,18 @@ const ALLOWED_ORIGINS = String(
   process.env.ALLOWED_ORIGINS || "http://localhost:5173,http://127.0.0.1:5173"
 )
   .split(",")
-  .map((origin) => origin.trim())
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
   .filter(Boolean);
 
 function isAllowedOrigin(origin) {
   if (!origin) return true;
 
-  if (ALLOWED_ORIGINS.includes(origin)) {
-    return true;
-  }
-
   try {
-    const parsedOrigin = new URL(origin);
-    const hostname = parsedOrigin.hostname.toLowerCase();
-
-    if (
-      parsedOrigin.protocol === "https:" &&
-      (hostname === "mapleavatarstudio.vercel.app" ||
-        hostname.endsWith(".vercel.app"))
-    ) {
-      return true;
-    }
+    const normalizedOrigin = new URL(origin).origin.replace(/\/+$/, "");
+    return ALLOWED_ORIGINS.includes(normalizedOrigin);
   } catch {
     return false;
   }
-
-  return false;
 }
 
 app.use(
